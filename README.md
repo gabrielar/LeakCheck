@@ -10,7 +10,7 @@ LeakCheck is a Swift library that helps ensure classes are properly deallocated 
 
 LeakCheck offers a `@TrackedInstances` property wrapper that, when applied to a class, lets you monitor how many instances of that class are currently alive. 
 
-Note that instance tracking only occurs in DEBUG mode and after `allocationLog.restart()` is called.
+Note that instance tracking only occurs in DEBUG mode and after `AllocationLog.restart()` is called.
 
 ### Using LeakCheck
 
@@ -24,19 +24,19 @@ final class InstanceCountingTests: XCTestCase {
 
     func testCounting() throws {
 
-        allocationLog.restart()
+        AllocationLog.restart()
         
-        XCTAssertEqual(allocationLog.countInstances(ofType: Bar.self), 0)
+        XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 0)
         var bar1: Bar? = Bar()
-        XCTAssertEqual(allocationLog.countInstances(ofType: Bar.self), 1)
+        XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 1)
         var bar2: Bar? = Bar()
-        XCTAssertEqual(allocationLog.countInstances(ofType: Bar.self), 2)
+        XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 2)
         bar1 = nil
-        XCTAssertEqual(allocationLog.countInstances(ofType: Bar.self), 1)
+        XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 1)
         bar2 = nil
-        XCTAssertEqual(allocationLog.countInstances(ofType: Bar.self), 0)
+        XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 0)
 
-        allocationLog.stop()
+        AllocationLog.stop()
     }
 }
 ```

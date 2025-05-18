@@ -14,15 +14,17 @@ public struct TrackerStruct: ~Copyable {
     private let type: AnyObject.Type
     public init(type: AnyObject.Type) {
         self.type = type
-        allocationLog.add(allocationOfType: type)
+        AllocationLog.shared.add(allocationOfType: type)
     }
     deinit {
-        allocationLog.add(deallocationOfType: type)
+        AllocationLog.shared.add(deallocationOfType: type)
     }
 }
 
 public class AllocationLog: @unchecked Sendable {
     
+    fileprivate static let shared = AllocationLog()
+
     enum Operation {
         case allocation(AnyObject.Type)
         case deallocation(AnyObject.Type)
@@ -51,7 +53,7 @@ public class AllocationLog: @unchecked Sendable {
         }
     }
     
-    public func countInstances(ofType type: AnyObject.Type) -> Int {
+    private func countInstances(ofType type: AnyObject.Type) -> Int {
         lock.lock()
         defer { lock.unlock() }
         var counter = 0
@@ -69,19 +71,27 @@ public class AllocationLog: @unchecked Sendable {
         }
         return counter
     }
+    public static func countInstances(ofType type: AnyObject.Type) -> Int {
+        AllocationLog.shared.countInstances(ofType: type)
+    }
     
-    public func restart() {
+    private func restart() {
         lock.lock()
         defer { lock.unlock() }
         log.removeAll()
         shouldLog = true
     }
+    public static func restart() {
+        AllocationLog.shared.restart()
+    }
     
-    public func stop() {
+    private func stop() {
         lock.lock()
         defer { lock.unlock() }
         shouldLog = false
     }
+    public static func stop() {
+        AllocationLog.shared.stop()
+    }
 }
 
-public let allocationLog = AllocationLog()
