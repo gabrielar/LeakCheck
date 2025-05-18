@@ -14,7 +14,17 @@ Note that instance tracking only occurs in DEBUG mode and after `AllocationLog.r
 
 ### Using LeakCheck
 
-Given a class `Bar` one can write following test:
+#### Checking by class type
+
+Given a class `Bar` annotated as stated below:
+
+```swift
+@TrackedInstances
+class Bar {
+}
+```
+
+one can write the following test:
 
 ```swift
 import XCTest
@@ -35,6 +45,45 @@ final class InstanceCountingTests: XCTestCase {
         XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 1)
         bar2 = nil
         XCTAssertEqual(AllocationLog.countInstances(ofType: Bar.self), 0)
+
+        AllocationLog.stop()
+    }
+}
+```
+
+#### Checking using a tag
+
+If the class is private, one cannot use its type in tests. Hence the `@TrackedInstances` macro can accept a tag as argument.
+
+Given a class `Bar` annotated as stated below:
+
+```swift
+@TrackedInstances(tag: "Bar")
+class Bar {
+}
+```
+
+one can write the following test:
+
+```swift
+import XCTest
+import LeakCheck
+
+final class InstanceCountingTests: XCTestCase {
+
+    func testCounting() throws {
+
+        AllocationLog.restart()
+        
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        var bar1: TaggedBar? = TaggedBar(someOtherString: "test1")
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 1)
+        var bar2: TaggedBar? = TaggedBar(someOtherString: "test2")
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 2)
+        bar1 = nil
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 1)
+        bar2 = nil
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
 
         AllocationLog.stop()
     }

@@ -21,7 +21,7 @@ let testMacros: [String: Macro.Type] = [
 #endif
 
 final class TrackedInstancesMacroTests: XCTestCase {
-    func testMacro() throws {
+    func testMacroWithNonTaggedClass() throws {
         #if canImport(LeakCheckMacros)
         
         #if DEBUG
@@ -51,4 +51,36 @@ final class TrackedInstancesMacroTests: XCTestCase {
         throw XCTSkip("macros are only supported when running tests for the host platform")
         #endif
     }
+    
+    func testMacroWithTaggedClass() throws {
+        #if canImport(LeakCheckMacros)
+        
+        #if DEBUG
+        let expandedSource = """
+            class Foo {
+            
+                let __leakCheckInstanceTrackerProperty = LeakCheck.TrackerStruct(type: Foo.self, tag: "FooTag")
+            }
+            """
+        #else
+        let expandedSource = """
+            class Foo {
+            }
+            """
+        #endif
+        
+        assertMacroExpansion(
+            """
+            @TrackedInstances(tag: "FooTag")
+            class Foo {
+            }
+            """,
+            expandedSource: expandedSource,
+            macros: testMacros
+        )
+        #else
+        throw XCTSkip("macros are only supported when running tests for the host platform")
+        #endif
+    }
+
 }

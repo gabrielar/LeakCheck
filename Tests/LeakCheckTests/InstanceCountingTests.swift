@@ -14,7 +14,7 @@ final class InstanceCountingTests: XCTestCase {
         AllocationLog.stop()
     }
 
-    func testCounting() throws {
+    func testCountingTypes() throws {
         
         AllocationLog.restart()
         
@@ -48,7 +48,42 @@ final class InstanceCountingTests: XCTestCase {
         
         #endif
     }
-    
+
+    func testCountingTags() throws {
+        
+        AllocationLog.restart()
+        
+        #if DEBUG
+        
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        var bar1: TaggedBar? = TaggedBar(someOtherString: "test1")
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 1)
+        var bar2: TaggedBar? = TaggedBar(someOtherString: "test2")
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 2)
+        bar1 = nil
+        XCTAssertNil(bar1) // silences warning
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 1)
+        bar2 = nil
+        XCTAssertNil(bar2) // silences warning
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        
+        #else
+        
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        var bar1: TaggedBar? = TaggedBar(someOtherString: "test1")
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        var bar2: TaggedBar? = TaggedBar(someOtherString: "test2")
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        bar1 = nil
+        XCTAssertNil(bar1) // silences warning
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        bar2 = nil
+        XCTAssertNil(bar2) // silences warning
+        XCTAssertEqual(try AllocationLog.countInstances(tag: "Bar"), 0)
+        
+        #endif
+    }
+
     func testDifferentiatingBetweenTypes() throws {
         
         AllocationLog.restart()
@@ -185,6 +220,35 @@ final class InstanceCountingTests: XCTestCase {
         #endif
     }
 
+    func testCountingWithDuplicateTags() throws {
+        
+        AllocationLog.restart()
+        
+        #if DEBUG
+        
+        XCTAssertEqual(try! AllocationLog.countInstances(tag: "Bar"), 0)
+        let tb1 = TaggedBar(someOtherString: "test1"); _ = tb1
+        XCTAssertEqual(try! AllocationLog.countInstances(tag: "Bar"), 1)
+        let tb2 = TaggedBar2(someOtherString: "test2"); _ = tb2
+        
+        XCTAssertThrowsError(try AllocationLog.countInstances(tag: "Bar")) { error in
+            guard let allocationLogError = error as? AllocationLog.Error else {
+                XCTFail("Unexpected error type: \(error)")
+                return
+            }
+            switch allocationLogError {
+            case .tagIsNotUnique(let tag, let types):
+                XCTAssert(tag == "Bar")
+                XCTAssert(types.count == 2)
+                let expectedTypes: [AnyObject.Type]  = [TaggedBar.self, TaggedBar2.self]
+                XCTAssert(expectedTypes.contains { $0 === types[0] } )
+                XCTAssert(expectedTypes.contains { $0 === types[1] } )
+            }
+        }
+        
+        #endif
+    }
+
 }
 
 @TrackedInstances
@@ -199,4 +263,23 @@ class Bar {
 @TrackedInstances
 class Foo {
     let someString = "Hello, World!"
+}
+
+
+@TrackedInstances(tag: "Bar")
+class TaggedBar {
+    let someString = "Hello, World!"
+    let someOtherString: String
+    init(someOtherString: String) {
+        self.someOtherString = someOtherString
+    }
+}
+
+@TrackedInstances(tag: "Bar")
+class TaggedBar2 {
+    let someString = "Hello, World!"
+    let someOtherString: String
+    init(someOtherString: String) {
+        self.someOtherString = someOtherString
+    }
 }
