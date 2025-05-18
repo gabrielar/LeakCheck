@@ -10,7 +10,7 @@ import Foundation
 @attached(member, names: named(__leakCheckInstanceTrackerProperty))
 public macro TrackedInstances() = #externalMacro(module: "LeakCheckMacros", type: "TrackedInstancesMacro")
 
-public struct TrackerStruct: ~Copyable {
+public struct TrackerStruct: ~Copyable, Sendable {
     private let type: AnyObject.Type
     public init(type: AnyObject.Type) {
         self.type = type
