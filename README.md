@@ -8,7 +8,7 @@ LeakCheck is a Swift library that helps ensure classes are properly deallocated 
 
 ## Getting started
 
-LeakCheck offers a @TrackedInstances property wrapper that, when applied to a class, lets you monitor how many instances of that class are currently alive. 
+LeakCheck offers a `@TrackedInstances` property wrapper that, when applied to a class, lets you monitor how many instances of that class are currently alive. 
 
 Note that instance tracking only occurs in DEBUG mode and after `allocationLog.restart()` is called.
 
